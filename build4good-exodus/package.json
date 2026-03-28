@@ -14,7 +14,6 @@
     "@react-three/fiber": "^8.17.10",
     "@tailwindcss/postcss": "^4.2.2",
     "ai": "^6.0.141",
-    "autoprefixer": "^10.4.27",
     "clsx": "^2.1.1",
     "lucide-react": "^1.7.0",
     "next": "14.2.35",
@@ -30,10 +29,11 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.183.1",
+    "autoprefixer": "^10.4.27",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5"
   }
 }
