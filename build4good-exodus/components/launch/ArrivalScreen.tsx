@@ -47,6 +47,51 @@ const LINE_COLORS: Record<string, string> = {
   trail: '#166534',
 }
 
+const STAR_DOTS = [
+  { top: '10%', left: '12%', size: 1, opacity: 0.22 },
+  { top: '11%', left: '33%', size: 1, opacity: 0.18 },
+  { top: '12%', left: '61%', size: 1, opacity: 0.24 },
+  { top: '13%', left: '84%', size: 1, opacity: 0.2 },
+  { top: '16%', left: '20%', size: 3, opacity: 0.45 },
+  { top: '17%', left: '52%', size: 1, opacity: 0.26 },
+  { top: '18%', left: '44%', size: 2, opacity: 0.4 },
+  { top: '20%', left: '8%', size: 1, opacity: 0.2 },
+  { top: '22%', left: '72%', size: 2, opacity: 0.65 },
+  { top: '24%', left: '28%', size: 1, opacity: 0.22 },
+  { top: '26%', left: '48%', size: 1, opacity: 0.18 },
+  { top: '28%', left: '58%', size: 4, opacity: 0.4 },
+  { top: '29%', left: '90%', size: 1, opacity: 0.24 },
+  { top: '34%', left: '14%', size: 2, opacity: 0.5 },
+  { top: '31%', left: '39%', size: 3, opacity: 0.38 },
+  { top: '33%', left: '68%', size: 1, opacity: 0.2 },
+  { top: '36%', left: '55%', size: 1, opacity: 0.18 },
+  { top: '38%', left: '82%', size: 3, opacity: 0.7 },
+  { top: '40%', left: '18%', size: 1, opacity: 0.26 },
+  { top: '45%', left: '24%', size: 2, opacity: 0.55 },
+  { top: '43%', left: '52%', size: 2, opacity: 0.5 },
+  { top: '46%', left: '73%', size: 1, opacity: 0.22 },
+  { top: '49%', left: '67%', size: 3, opacity: 0.5 },
+  { top: '51%', left: '34%', size: 1, opacity: 0.18 },
+  { top: '53%', left: '59%', size: 1, opacity: 0.2 },
+  { top: '57%', left: '10%', size: 2, opacity: 0.35 },
+  { top: '55%', left: '88%', size: 2, opacity: 0.48 },
+  { top: '58%', left: '46%', size: 1, opacity: 0.24 },
+  { top: '60%', left: '78%', size: 4, opacity: 0.55 },
+  { top: '63%', left: '26%', size: 1, opacity: 0.18 },
+  { top: '65%', left: '70%', size: 1, opacity: 0.22 },
+  { top: '68%', left: '18%', size: 3, opacity: 0.4 },
+  { top: '70%', left: '48%', size: 2, opacity: 0.42 },
+  { top: '71%', left: '82%', size: 1, opacity: 0.2 },
+  { top: '72%', left: '62%', size: 2, opacity: 0.6 },
+  { top: '74%', left: '12%', size: 1, opacity: 0.24 },
+  { top: '76%', left: '38%', size: 1, opacity: 0.18 },
+  { top: '79%', left: '86%', size: 3, opacity: 0.45 },
+  { top: '80%', left: '57%', size: 1, opacity: 0.2 },
+  { top: '82%', left: '30%', size: 2, opacity: 0.36 },
+  { top: '84%', left: '68%', size: 1, opacity: 0.24 },
+  { top: '86%', left: '16%', size: 1, opacity: 0.18 },
+]
+
 const TERMINAL_TEXT = [
   '> ARRIVAL CONFIRMED.',
   '> Orbital insertion complete.',
@@ -86,6 +131,10 @@ const KEYFRAMES = `
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes starPulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 @media (max-width: 900px) {
   .arrival-overlay {
@@ -301,9 +350,30 @@ export function ArrivalScreen({
             {'// ARRIVAL CONFIRMED - ORBIT ACHIEVED'}
           </div>
 
+          {STAR_DOTS.map((star, index) => (
+            <span
+              key={index}
+              style={{
+                position: 'absolute',
+                top: star.top,
+                left: star.left,
+                width: star.size,
+                height: star.size,
+                borderRadius: '50%',
+                background: '#86efac',
+                opacity: star.opacity,
+                boxShadow: '0 0 8px rgba(134,239,172,0.8)',
+                animation: `starPulse ${2.8 + (index % 4) * 0.45}s ease-in-out ${index * 0.12}s infinite`,
+                pointerEvents: 'none',
+              }}
+            />
+          ))}
+
           <div
             style={{
               animation: visible ? 'rocketRise 7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards' : 'none',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             <pre
