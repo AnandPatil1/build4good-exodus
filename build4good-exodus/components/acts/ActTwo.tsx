@@ -14,18 +14,42 @@ import type { Planet } from '@/store/useAppStore'
 type Act = 'earth' | 'exoplanet' | 'launch'
 const VISIBLE_PLANET_LIMIT = 10
 
+function hashPlanetId(planetId: string) {
+  let hash = 2166136261
+
+  for (let index = 0; index < planetId.length; index += 1) {
+    hash ^= planetId.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return hash >>> 0
+}
+
+function seededUnit(seed: number, offset: number) {
+  const value = Math.sin((seed + offset) * 12.9898) * 43758.5453
+  return value - Math.floor(value)
+}
+
 // Convert RA/Dec into a wider 3D distribution so the visible set stays readable.
 function planetPosition(planet: Planet, index: number): [number, number, number] {
-  const angle = (index / VISIBLE_PLANET_LIMIT) * Math.PI * 2 + (planet.ra / 360) * 0.35
+  const seed = hashPlanetId(planet.id)
+  const angleJitter = (seededUnit(seed, 1) - 0.5) * 0.9
+  const radiusJitter = (seededUnit(seed, 2) - 0.5) * 7
+  const xStretch = 0.75 + seededUnit(seed, 3) * 0.65
+  const zStretch = 0.75 + seededUnit(seed, 4) * 0.7
+  const xDrift = (seededUnit(seed, 5) - 0.5) * 4.5
+  const zDrift = (seededUnit(seed, 6) - 0.5) * 5.5
+  const yJitter = (seededUnit(seed, 7) - 0.5) * 6
+  const angle = (index / VISIBLE_PLANET_LIMIT) * Math.PI * 2 + (planet.ra / 360) * 0.35 + angleJitter
   const ring = Math.floor(index / 5)
-  const radius = ring === 0 ? 15 : 24
+  const radius = (ring === 0 ? 15 : 24) + radiusJitter
   const verticalBand = ring === 0 ? 4.5 : -4.5
-  const verticalOffset = (planet.dec / 90) * 1.8
+  const verticalOffset = (planet.dec / 90) * 1.8 + yJitter
 
   return [
-    Math.cos(angle) * radius,
+    Math.cos(angle) * radius * xStretch + xDrift,
     verticalBand + verticalOffset,
-    Math.sin(angle) * radius,
+    Math.sin(angle) * radius * zStretch + zDrift,
   ]
 }
 
@@ -50,6 +74,18 @@ export default function ActTwo({ onNavigate, onSelectDestination }: {
       .then((payload: { data: Planet[] }) => setPlanets(payload.data))
       .catch(() => {/* fallback mock already in store if needed */})
   }, [setPlanets])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedPlanet(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [setSelectedPlanet])
 
   const filteredPlanets = planets.filter(p =>
     p.cvi >= filters.cvi &&
@@ -86,11 +122,22 @@ export default function ActTwo({ onNavigate, onSelectDestination }: {
             </span>
           </div>
           {selectedPlanet && (
-            <div className="absolute bottom-6 right-1/3 px-2 py-1 bg-neutral-800/80 border-r-2 border-emerald-500 pointer-events-none">
-              <span className="text-emerald-400 text-[10px] font-mono">
-                CVI: {selectedPlanet.cvi}% — {selectedPlanet.name.toUpperCase()}
-              </span>
-            </div>
+            <>
+              <div className="absolute top-6 right-6 z-10">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlanet(null)}
+                  className="border border-stone-700 bg-neutral-900/85 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.2em] text-stone-200 transition-colors hover:border-rose-300 hover:text-white"
+                >
+                  Esc Reset View
+                </button>
+              </div>
+              <div className="absolute bottom-6 right-1/3 px-2 py-1 bg-neutral-800/80 border-r-2 border-emerald-500 pointer-events-none">
+                <span className="text-emerald-400 text-[10px] font-mono">
+                  CVI: {selectedPlanet.cvi}% — {selectedPlanet.name.toUpperCase()}
+                </span>
+              </div>
+            </>
           )}
         </div>
         <PlanetDetail onSelectDestination={onSelectDestination} />
