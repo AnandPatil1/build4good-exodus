@@ -117,7 +117,7 @@ export function BottomBar({ onInitiate }: { onInitiate: () => void }) {
               : 'border-rose-400/70 bg-stone-950/70 text-stone-100 hover:bg-stone-800'
           }`}
           style={{
-            padding: '0.95rem 1.85rem',
+            padding: '0.7rem 0.5rem',
             boxShadow: `0 0 ${18 + earthHeatLevel * 26}px rgba(244, 63, 94, ${0.12 + earthHeatLevel * 0.28})`,
             animationDuration: buttonFlashDuration,
           }}
