@@ -29,11 +29,17 @@ export interface EarthRegression {
   }
 }
 
+export type EarthSeries = Record<string, number[]>
+
 interface AppStore {
   selectedPlanet: Planet | null
   planets: Planet[]
   earthRegression: EarthRegression | null
+  earthSeries: EarthSeries | null
   earthLoading: boolean
+  timeToBreachYears: number | null
+  breachingParam: string | null
+  elapsedYears: number
   filters: {
     cvi: number
     radius: number
@@ -42,7 +48,10 @@ interface AppStore {
   setSelectedPlanet: (planet: Planet | null) => void
   setPlanets: (planets: Planet[]) => void
   setEarthRegression: (data: EarthRegression) => void
+  setEarthSeries: (series: EarthSeries) => void
   setEarthLoading: (loading: boolean) => void
+  setTimeToBreach: (years: number, param: string) => void
+  tickYear: () => void
   setFilter: (key: keyof AppStore['filters'], value: number) => void
 }
 
@@ -50,11 +59,18 @@ export const useAppStore = create<AppStore>((set) => ({
   selectedPlanet: null,
   planets: [],
   earthRegression: null,
+  earthSeries: null,
   earthLoading: true,
+  timeToBreachYears: null,
+  breachingParam: null,
+  elapsedYears: 0,
   filters: { cvi: 0, radius: 2, distanceLy: 5000 },
   setSelectedPlanet: (planet) => set({ selectedPlanet: planet }),
   setPlanets: (planets) => set({ planets }),
   setEarthRegression: (data) => set({ earthRegression: data }),
+  setEarthSeries: (series) => set({ earthSeries: series }),
   setEarthLoading: (loading) => set({ earthLoading: loading }),
+  setTimeToBreach: (years, param) => set({ timeToBreachYears: years, breachingParam: param }),
+  tickYear: () => set(s => ({ elapsedYears: s.elapsedYears + 1 })),
   setFilter: (key, value) => set(s => ({ filters: { ...s.filters, [key]: value } })),
 }))

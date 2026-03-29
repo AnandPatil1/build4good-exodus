@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 interface StatCardProps {
   label: string
   value: string
@@ -8,12 +10,75 @@ interface StatCardProps {
   alertColor: string
   lineColor: string
   trend: 'up' | 'down'
+  series?: number[]
+  thresholdPct?: number
 }
 
-export function StatCard({ label, value, unit, alert, alertColor, lineColor, trend }: StatCardProps) {
-  const points = trend === 'up'
-    ? '0,38 50,34 100,28 150,22 200,14 250,8 300,3'
-    : '0,5 50,10 100,16 150,24 200,30 250,35 300,40'
+function useCountUp(target: number, duration = 1200) {
+  const [current, setCurrent] = useState(0)
+  useEffect(() => {
+    const start = performance.now()
+    const frame = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCurrent(target * eased)
+      if (progress < 1) requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  }, [target, duration])
+  return current
+}
+
+function Sparkline({ series, color }: { series: number[]; color: string }) {
+  if (!series || series.length < 2) return null
+
+  const min = Math.min(...series)
+  const max = Math.max(...series)
+  const range = max - min || 1
+  const w = 300
+  const h = 44
+
+  const points = series
+    .map((v, i) => {
+      const x = (i / (series.length - 1)) * w
+      const y = h - ((v - min) / range) * (h - 4) - 2
+      return `${x},${y}`
+    })
+    .join(' ')
+
+  const gradId = `fill-${color.replace('#', '')}`
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: h }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon
+        points={`0,${h} ${points} ${w},${h}`}
+        fill={`url(#${gradId})`}
+      />
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+export function StatCard({ label, value, unit, alert, alertColor, lineColor, trend, series, thresholdPct }: StatCardProps) {
+  const numericTarget = parseFloat(value.replace(/[^0-9.-]/g, ''))
+  const isNumeric = !isNaN(numericTarget)
+  const animated = useCountUp(isNumeric ? numericTarget : 0)
+  const displayValue = isNumeric
+    ? (value.startsWith('+') ? '+' : '') + animated.toFixed(1)
+    : value
 
   return (
     <div className="flex-1 px-5 py-4 bg-[#1a1a1a] border-b border-stone-800 flex flex-col justify-between overflow-hidden">
@@ -21,34 +86,37 @@ export function StatCard({ label, value, unit, alert, alertColor, lineColor, tre
         <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
           {label}
         </span>
-        <div className="w-3.5 h-3.5 opacity-60" style={{ color: lineColor }}>↗</div>
+        <span style={{ color: lineColor }} className="text-xs">
+          {trend === 'up' ? '↑' : '↓'}
+        </span>
       </div>
 
       <div className="flex items-baseline gap-1.5 mt-1">
         <span className="text-3xl font-black text-orange-200 font-mono tracking-tight">
-          {value}
+          {displayValue}
         </span>
         <span className="text-xs text-stone-500 font-mono uppercase">{unit}</span>
       </div>
 
-      <svg
-        viewBox="0 0 300 44"
-        className="w-full mt-1"
-        preserveAspectRatio="none"
-        style={{ height: 44 }}
-      >
-        <polyline
-          points={points}
-          fill="none"
-          stroke={lineColor}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <div className="mt-1">
+        <Sparkline series={series ?? []} color={lineColor} />
+      </div>
+
+      {/* Threshold proximity bar */}
+      {typeof thresholdPct === 'number' && (
+        <div className="w-full h-0.5 bg-stone-800 mt-2">
+          <div
+            className="h-full transition-all duration-500"
+            style={{
+              width: `${Math.min(100, thresholdPct * 100)}%`,
+              backgroundColor: thresholdPct > 0.8 ? '#f87171' : thresholdPct > 0.5 ? '#fbbf24' : '#10b981',
+            }}
+          />
+        </div>
+      )}
 
       <div className={`text-[9px] font-bold uppercase tracking-widest mt-1 ${alertColor} flex items-center gap-1`}>
-        <span>▲</span>
+        <span>{trend === 'up' ? '▲' : '▼'}</span>
         <span>{alert}</span>
       </div>
     </div>

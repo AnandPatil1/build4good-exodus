@@ -3,34 +3,31 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { StatCard } from '@/components/ui/StatCard'
-import type { EarthRegression } from '@/store/useAppStore'
+import type { EarthRegression, EarthSeries } from '@/store/useAppStore'
+import { computeFirstBreach } from '@/lib/threshold'
 
-// Project a parameter's value at a future month index using slope/intercept
 function project(coeff: { slope: number | null; intercept: number | null }, atX: number): number | null {
   if (coeff.slope === null || coeff.intercept === null) return null
   return coeff.intercept + coeff.slope * atX
 }
 
-// Format projected value nicely
 function fmt(val: number | null, decimals = 1): string {
   if (val === null) return '—'
   return val.toFixed(decimals)
 }
 
-function buildStats(r: EarthRegression) {
-  // Project ~2 years ahead (24 months) from last data point
-  const futureX = 120 + 24
-
+function buildStats(r: EarthRegression, s: EarthSeries, elapsedYears: number) {
+  const futureX = 120 + Math.round(elapsedYears * 12)
   return [
     {
-      label: 'TEMP AT 2M (T2M)',
+      label: 'TEMP AT 2M',
       value: fmt(project(r.coefficients.T2M, futureX)),
       unit: '°C',
       alert: (r.coefficients.T2M.slope ?? 0) > 0 ? 'WARMING TREND DETECTED' : 'COOLING TREND',
       alertColor: (r.coefficients.T2M.slope ?? 0) > 0 ? 'text-rose-400' : 'text-blue-400',
       lineColor: '#f87171',
-      trend: (r.coefficients.T2M.slope ?? 0) > 0 ? 'up' : 'down',
-      slope: r.coefficients.T2M.slope,
+      trend: ((r.coefficients.T2M.slope ?? 0) > 0 ? 'up' : 'down') as 'up' | 'down',
+      series: s['T2M'],
     },
     {
       label: 'PRECIPITATION',
@@ -39,8 +36,8 @@ function buildStats(r: EarthRegression) {
       alert: (r.coefficients.PRECTOTCORR.slope ?? 0) > 0 ? 'RAINFALL INCREASING' : 'DROUGHT RISK RISING',
       alertColor: (r.coefficients.PRECTOTCORR.slope ?? 0) > 0 ? 'text-blue-400' : 'text-amber-400',
       lineColor: '#60a5fa',
-      trend: (r.coefficients.PRECTOTCORR.slope ?? 0) > 0 ? 'up' : 'down',
-      slope: r.coefficients.PRECTOTCORR.slope,
+      trend: ((r.coefficients.PRECTOTCORR.slope ?? 0) > 0 ? 'up' : 'down') as 'up' | 'down',
+      series: s['PRECTOTCORR'],
     },
     {
       label: 'RELATIVE HUMIDITY',
@@ -49,8 +46,8 @@ function buildStats(r: EarthRegression) {
       alert: 'ATMOSPHERIC MOISTURE TRACKED',
       alertColor: 'text-stone-400',
       lineColor: '#a78bfa',
-      trend: (r.coefficients.RH2M.slope ?? 0) > 0 ? 'up' : 'down',
-      slope: r.coefficients.RH2M.slope,
+      trend: ((r.coefficients.RH2M.slope ?? 0) > 0 ? 'up' : 'down') as 'up' | 'down',
+      series: s['RH2M'],
     },
     {
       label: 'WIND SPEED',
@@ -59,8 +56,8 @@ function buildStats(r: EarthRegression) {
       alert: (r.coefficients.WS2M.slope ?? 0) > 0.001 ? 'WIND PATTERNS SHIFTING' : 'WIND NOMINAL',
       alertColor: (r.coefficients.WS2M.slope ?? 0) > 0.001 ? 'text-amber-400' : 'text-stone-400',
       lineColor: '#fbbf24',
-      trend: (r.coefficients.WS2M.slope ?? 0) > 0 ? 'up' : 'down',
-      slope: r.coefficients.WS2M.slope,
+      trend: ((r.coefficients.WS2M.slope ?? 0) > 0 ? 'up' : 'down') as 'up' | 'down',
+      series: s['WS2M'],
     },
     {
       label: 'SOLAR RADIATION',
@@ -69,25 +66,39 @@ function buildStats(r: EarthRegression) {
       alert: (r.coefficients.ALLSKY_SFC_SW_DWN.slope ?? 0) > 0 ? 'IRRADIANCE RISING' : 'IRRADIANCE STABLE',
       alertColor: (r.coefficients.ALLSKY_SFC_SW_DWN.slope ?? 0) > 0 ? 'text-rose-400' : 'text-stone-400',
       lineColor: '#fb923c',
-      trend: (r.coefficients.ALLSKY_SFC_SW_DWN.slope ?? 0) > 0 ? 'up' : 'down',
-      slope: r.coefficients.ALLSKY_SFC_SW_DWN.slope,
+      trend: ((r.coefficients.ALLSKY_SFC_SW_DWN.slope ?? 0) > 0 ? 'up' : 'down') as 'up' | 'down',
+      series: s['ALLSKY_SFC_SW_DWN'],
     },
-  ] as const
+  ]
 }
 
 export function StatPanel() {
-  const { earthRegression, earthLoading, setEarthRegression, setEarthLoading } = useAppStore()
+  const {
+    earthRegression, earthSeries, earthLoading, elapsedYears,
+    setEarthRegression, setEarthSeries, setEarthLoading, setTimeToBreach,
+  } = useAppStore()
 
   useEffect(() => {
-    setEarthLoading(true)
-    fetch('/api/earth-data')
-      .then(r => r.json())
-      .then((payload: { ok: boolean; regression: EarthRegression }) => {
-        if (payload.ok) setEarthRegression(payload.regression)
-      })
-      .catch(() => {/* keep showing skeleton */})
-      .finally(() => setEarthLoading(false))
-  }, [setEarthRegression, setEarthLoading])
+    const load = () => {
+      setEarthLoading(true)
+      fetch('/api/earth-data')
+        .then(r => r.json())
+        .then((payload: { ok: boolean; regression: EarthRegression; series: EarthSeries }) => {
+          if (payload.ok) {
+            setEarthRegression(payload.regression)
+            setEarthSeries(payload.series)
+            const breach = computeFirstBreach(payload.regression, payload.series)
+            setTimeToBreach(breach.years, breach.label)
+          }
+        })
+        .catch(() => {})
+        .finally(() => setEarthLoading(false))
+    }
+
+    load()
+    const interval = setInterval(load, 60_000)
+    return () => clearInterval(interval)
+  }, [setEarthRegression, setEarthSeries, setEarthLoading, setTimeToBreach])
 
   if (earthLoading) {
     return (
@@ -103,7 +114,7 @@ export function StatPanel() {
     )
   }
 
-  if (!earthRegression) {
+  if (!earthRegression || !earthSeries) {
     return (
       <div className="w-[340px] shrink-0 h-full flex flex-col border-l border-stone-800 overflow-hidden items-center justify-center">
         <span className="text-rose-400 text-xs font-mono uppercase">NASA DATA UNAVAILABLE</span>
@@ -111,21 +122,12 @@ export function StatPanel() {
     )
   }
 
-  const stats = buildStats(earthRegression)
+  const stats = buildStats(earthRegression, earthSeries, elapsedYears)
 
   return (
     <div className="w-[340px] shrink-0 h-full flex flex-col border-l border-stone-800 overflow-hidden">
       {stats.map(stat => (
-        <StatCard
-          key={stat.label}
-          label={stat.label}
-          value={stat.value}
-          unit={stat.unit}
-          alert={stat.alert}
-          alertColor={stat.alertColor}
-          lineColor={stat.lineColor}
-          trend={stat.trend as 'up' | 'down'}
-        />
+        <StatCard key={stat.label} {...stat} />
       ))}
     </div>
   )

@@ -43,8 +43,8 @@ export function PlanetDetail({ onSelectDestination }: { onSelectDestination: () 
               />
             </svg>
             <div className="absolute flex flex-col items-center">
-              <span className="text-white text-2xl font-black">{planet.cvi}%</span>
-              <span className="text-stone-400 text-[8px] font-mono uppercase tracking-wider">CVI SCORE</span>
+              <span className="text-white text-2xl font-black">{planet.cvi}</span>
+              <span className="text-stone-400 text-[8px] font-mono uppercase tracking-wider">Similarity Index</span>
             </div>
           </div>
         </div>
