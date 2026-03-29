@@ -5,7 +5,6 @@ import { SideNav } from '@/components/layout/SideNav'
 import { OrbitalMap } from '@/components/launch/OrbitalMap'
 import { TelemetryDial } from '@/components/launch/TelemetryDial'
 import { MissionSummary } from '@/components/launch/MissionSummary'
-import { useAppStore } from '@/store/useAppStore'
 
 type Act = 'earth' | 'exoplanet' | 'launch'
 

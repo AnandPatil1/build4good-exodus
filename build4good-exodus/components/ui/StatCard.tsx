@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 
 interface StatCardProps {
   label: string
+  description?: string
   value: string
   unit: string
   alert: string
@@ -52,17 +54,7 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
 
   const lastIndex = series.length - 1
 
-  // full points string
   const points = series
-    .map((v, i) => {
-      const { x, y } = getPoint(v, i)
-      return `${x},${y}`
-    })
-    .join(' ')
-
-  // split for projection highlight
-  const pastPoints = series
-    .slice(0, lastIndex)
     .map((v, i) => {
       const { x, y } = getPoint(v, i)
       return `${x},${y}`
@@ -79,7 +71,6 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
     .join(' ')
 
   const last = getPoint(series[lastIndex], lastIndex)
-
   const gradId = `grad-${color.replace('#', '')}`
 
   return (
@@ -91,23 +82,18 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
         </linearGradient>
       </defs>
 
-      {/* area fill */}
       <polygon points={`0,${h} ${points} ${w},${h}`} fill={`url(#${gradId})`} />
 
-      {/* past line */}
-    <polyline
-      points={points}
-      fill="none"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{
-        transition: 'all 0.6s ease-out'
-      }}
-    />
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ transition: 'all 0.6s ease-out' }}
+      />
 
-      {/* projected segment */}
       <polyline
         points={lastSegment}
         fill="none"
@@ -117,7 +103,6 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
         strokeLinejoin="round"
       />
 
-      {/* glowing endpoint */}
       <circle cx={last.x} cy={last.y} r="2.5" fill={color} />
       <circle cx={last.x} cy={last.y} r="6" fill={color} opacity="0.15" />
     </svg>
@@ -126,6 +111,7 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
 
 export function StatCard({
   label,
+  description,
   value,
   unit,
   alert,
@@ -137,94 +123,93 @@ export function StatCard({
 }: StatCardProps) {
   const numericTarget = parseFloat(value.replace(/[^0-9.-]/g, ''))
   const isNumeric = !isNaN(numericTarget)
-
   const animated = useCountUp(isNumeric ? numericTarget : 0)
-
   const displayValue = isNumeric
     ? (value.startsWith('+') ? '+' : '') + animated.toFixed(1)
     : value
 
-  // 🔥 append projected value to graph
-const [liveSeries, setLiveSeries] = useState<number[]>([])
+  const [liveSeries, setLiveSeries] = useState<number[]>([])
 
-useEffect(() => {
-  if (!series || !isNumeric) return
+  useEffect(() => {
+    if (!series || !isNumeric) return
+    setLiveSeries(series.slice(-20))
+  }, [series, isNumeric])
 
-  setLiveSeries(series.slice(-20))
-}, [series])
+  useEffect(() => {
+    if (!isNumeric) return
 
-useEffect(() => {
-  if (!isNumeric) return
+    const interval = setInterval(() => {
+      setLiveSeries((prev) => {
+        if (prev.length === 0) return prev
+        return [...prev.slice(1), numericTarget]
+      })
+    }, 1000)
 
-  const interval = setInterval(() => {
-    setLiveSeries(prev => {
-      if (prev.length === 0) return prev
+    return () => clearInterval(interval)
+  }, [numericTarget, isNumeric])
 
-      const next = [...prev.slice(1), numericTarget]
-      return next
-    })
-  }, 1000) // 👈 update every second
-
-  return () => clearInterval(interval)
-}, [numericTarget])
-  // dynamic color based on threshold
   const dynamicColor =
     thresholdPct && thresholdPct > 0.8
       ? '#f87171'
       : thresholdPct && thresholdPct > 0.5
-      ? '#fbbf24'
-      : lineColor
+        ? '#fbbf24'
+        : lineColor
 
   return (
-    <div className="flex-1 px-5 py-4 bg-[#1a1a1a] border-b border-stone-800 flex flex-col justify-between overflow-hidden">
-      
-      {/* header */}
-      <div className="flex justify-between items-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
-          {label}
-        </span>
-        <span style={{ color: dynamicColor }} className="text-xs">
-          {trend === 'up' ? '↑' : '↓'}
-        </span>
-      </div>
+    <div className="flex-1 overflow-hidden border-b border-stone-800 bg-[#1a1a1a] px-5 py-4">
+      <div className="flex h-full flex-col justify-between">
+        <div className="flex items-center justify-between">
+          {description ? (
+            <InfoTooltip
+              term={label}
+              description={description}
+              textClassName="text-[10px] font-bold uppercase tracking-widest text-stone-500 hover:text-orange-200"
+            >
+              {label}
+            </InfoTooltip>
+          ) : (
+            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
+              {label}
+            </span>
+          )}
 
-      {/* value */}
-      <div className="flex items-baseline gap-1.5 mt-1">
-        <span className="text-3xl font-black text-orange-200 font-mono tracking-tight">
-          {displayValue}
-        </span>
-        <span className="text-xs text-stone-500 font-mono uppercase">
-          {unit}
-        </span>
-      </div>
-
-      {/* sparkline */}
-      <div className="mt-1">
-        <Sparkline series={liveSeries} color={dynamicColor} />
-      </div>
-
-      {/* threshold bar */}
-      {typeof thresholdPct === 'number' && (
-        <div className="w-full h-0.5 bg-stone-800 mt-2">
-          <div
-            className="h-full transition-all duration-500"
-            style={{
-              width: `${Math.min(100, thresholdPct * 100)}%`,
-              backgroundColor:
-                thresholdPct > 0.8
-                  ? '#f87171'
-                  : thresholdPct > 0.5
-                  ? '#fbbf24'
-                  : '#10b981',
-            }}
-          />
+          <span style={{ color: dynamicColor }} className="text-xs">
+            {trend === 'up' ? '↑' : '↓'}
+          </span>
         </div>
-      )}
 
-      {/* alert */}
-      <div className={`text-[9px] font-bold uppercase tracking-widest mt-1 ${alertColor} flex items-center gap-1`}>
-        <span>{trend === 'up' ? '▲' : '▼'}</span>
-        <span>{alert}</span>
+        <div className="mt-1 flex items-baseline gap-1.5">
+          <span className="font-mono text-3xl font-black tracking-tight text-orange-200">
+            {displayValue}
+          </span>
+          <span className="font-mono text-xs uppercase text-stone-500">{unit}</span>
+        </div>
+
+        <div className="mt-1">
+          <Sparkline series={liveSeries} color={dynamicColor} />
+        </div>
+
+        {typeof thresholdPct === 'number' && (
+          <div className="mt-2 h-0.5 w-full bg-stone-800">
+            <div
+              className="h-full transition-all duration-500"
+              style={{
+                width: `${Math.min(100, thresholdPct * 100)}%`,
+                backgroundColor:
+                  thresholdPct > 0.8
+                    ? '#f87171'
+                    : thresholdPct > 0.5
+                      ? '#fbbf24'
+                      : '#10b981',
+              }}
+            />
+          </div>
+        )}
+
+        <div className={`mt-1 flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest ${alertColor}`}>
+          <span>{trend === 'up' ? '▲' : '▼'}</span>
+          <span>{alert}</span>
+        </div>
       </div>
     </div>
   )

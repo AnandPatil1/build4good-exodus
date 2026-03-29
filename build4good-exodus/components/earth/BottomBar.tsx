@@ -41,7 +41,7 @@ export function BottomBar({ onInitiate }: { onInitiate: () => void }) {
     }, 5000) // 1 year = 5 seconds
 
     return () => clearInterval(interval)
-  }, [timeToBreachYears])
+  }, [timeToBreachYears, tickYear])
 
   const isExpired = totalMs === 0
 

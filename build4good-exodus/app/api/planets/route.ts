@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { MOCK_PLANETS } from "@/lib/mock/planets";
 import { fetchRawPlanets, mapRow } from "@/lib/nasa";
-import { computeCVI } from "@/lib/score";
 import type { Planet } from "@/types/planet";
 
 export async function GET() {
@@ -10,25 +9,7 @@ export async function GET() {
     const rows = await fetchRawPlanets();
 
     const planets: Planet[] = rows
-      .map((row) => {
-        const planet = mapRow(row);
-        const cvi = computeCVI({
-          id: planet.id,
-          name: planet.name,
-          radius: planet.radius,
-          mass: planet.mass,
-          temp: planet.temp,
-          distanceLy: planet.distanceLy,
-          period: planet.period,
-          ra: planet.ra,
-          dec: planet.dec,
-        });
-
-        return {
-          ...planet,
-          cvi,
-        };
-      })
+      .map((row) => mapRow(row))
       .filter((planet) => planet.cvi !== 0)
       .sort((left, right) => right.cvi - left.cvi);
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { OrbitControls, Points, PointMaterial, Stars } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useAppStore } from '@/store/useAppStore'
 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 30)
@@ -11,7 +12,7 @@ const DEFAULT_LOOK_AT = new THREE.Vector3(0, 0, 0)
 
 export function StarField({ children }: { children?: React.ReactNode }) {
   const selectedPlanetId = useAppStore(s => s.selectedPlanet?.id ?? null)
-  const controlsRef = useRef<any>(null)
+  const controlsRef = useRef<OrbitControlsImpl | null>(null)
 
   return (
     <Canvas
@@ -215,7 +216,7 @@ function CameraResetController({
   controlsRef,
   selectedPlanetId,
 }: {
-  controlsRef: React.MutableRefObject<any>
+  controlsRef: React.MutableRefObject<OrbitControlsImpl | null>
   selectedPlanetId: string | null
 }) {
   const { camera } = useThree()
