@@ -72,6 +72,27 @@ const itemVariants = {
   }),
 }
 
+const DEVPOST_SCROLLBAR_STYLES = `
+.devpost-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #10b981 rgba(10, 26, 10, 0.9);
+}
+.devpost-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.devpost-scroll::-webkit-scrollbar-track {
+  background: rgba(10, 26, 10, 0.9);
+}
+.devpost-scroll::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.8);
+  border-radius: 999px;
+  border: 1px solid rgba(3, 10, 3, 0.85);
+}
+.devpost-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(110, 231, 183, 0.9);
+}
+`
+
 function InstructionsPopup({ onClose }: { onClose: () => void }) {
   const [activePart, setActivePart] = useState<number>(0)
 
@@ -210,6 +231,7 @@ function DevpostPopup({ onClose }: { onClose: () => void }) {
       animate="visible"
       exit="hidden"
     >
+      <style>{DEVPOST_SCROLLBAR_STYLES}</style>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       <motion.div
@@ -250,7 +272,7 @@ function DevpostPopup({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Criteria list */}
-        <div className="overflow-y-auto flex-1 divide-y divide-stone-800/60">
+        <div className="devpost-scroll overflow-y-auto flex-1 divide-y divide-stone-800/60">
           {DEVPOST_CRITERIA.map((item, i) => (
             <motion.div
               key={item.criterion}
