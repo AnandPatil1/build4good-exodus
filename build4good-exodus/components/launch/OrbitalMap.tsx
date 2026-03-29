@@ -5,11 +5,11 @@ import { getMissionPhase, type LaunchState } from '@/components/launch/launchAni
 import type { Planet } from '@/store/useAppStore'
 import { ArrivalScreen } from './ArrivalScreen'
  
-const ORIGIN = { x: 64, y: 160 }
+const ORIGIN = { x: 92, y: 160 }
 const MIN_VISIBLE_DISTANCE_LY = 4
 const MAX_VISIBLE_DISTANCE_LY = 1500
-const TARGET_MIN_X = 146
-const TARGET_MAX_X = 286
+const TARGET_MIN_X = 210
+const TARGET_MAX_X = 302
 const TARGET_MIN_Y = 72
 const TARGET_MAX_Y = 248
  
@@ -48,8 +48,8 @@ export function OrbitalMap({
  
       <div className="relative flex flex-1 overflow-hidden bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.08),_transparent_56%)]">
         {/* Orrery always rendered underneath */}
-        <div className="w-full h-full">
-          <div className="flex h-full items-center justify-center px-4 py-4">
+        <div className="h-full w-full overflow-visible">
+          <div className="flex h-full items-center justify-center overflow-visible px-4 py-4 md:px-8">
             <OrreryCanvas
               planet={planet}
               planetName={destinationName}
@@ -165,11 +165,11 @@ function OrreryCanvas({
     <svg
       width="100%"
       height="100%"
-      viewBox="0 0 260 260"
-      className="h-[78vh] w-full max-w-[900px]"
+      viewBox="0 0 340 260"
+      className="h-[82vh] w-full max-w-[1100px] overflow-visible"
       preserveAspectRatio="xMidYMid meet"
     >
-      <g transform="translate(2 -4) scale(1.08)">
+      <g transform="translate(0 -4) scale(1.03)">
         <circle cx={ORIGIN.x} cy={ORIGIN.y} r={4.5} fill="#fcd34d" />
  
         <circle
@@ -241,7 +241,7 @@ function OrreryCanvas({
         )}
  
         <text
-          x={160}
+          x={170}
           y={28}
           fill={hasSelection ? '#86efac' : '#737373'}
           fontSize="10"
@@ -253,7 +253,7 @@ function OrreryCanvas({
         </text>
  
         <text
-          x={Math.min(target.x + 9, 290)}
+          x={Math.min(target.x + 12, 320)}
           y={target.y - 11}
           fill="#10b981"
           fontSize="8.5"
@@ -263,7 +263,7 @@ function OrreryCanvas({
           TARGET DESTINATION
         </text>
         <text
-          x={Math.min(target.x + 9, 290)}
+          x={Math.min(target.x + 12, 320)}
           y={target.y + 3}
           fill={hasSelection ? '#e7e5e4' : '#78716c'}
           fontSize="10"
