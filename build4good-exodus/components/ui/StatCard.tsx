@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 
 interface StatCardProps {
@@ -16,21 +16,50 @@ interface StatCardProps {
   thresholdPct?: number
 }
 
-function useCountUp(target: number, duration = 1200) {
-  const [current, setCurrent] = useState(0)
+function useCountTransition(target: number, duration = 1200) {
+  const [current, setCurrent] = useState(target)
+  const frameRef = useRef<number | null>(null)
+  const currentRef = useRef(target)
 
   useEffect(() => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current)
+      frameRef.current = null
+    }
+
+    const startValue = currentRef.current
+
+    if (startValue === target) {
+      setCurrent(target)
+      return
+    }
+
     const start = performance.now()
 
     const frame = (now: number) => {
       const progress = Math.min((now - start) / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
-      setCurrent(target * eased)
+      const nextValue = startValue + (target - startValue) * eased
+      currentRef.current = nextValue
+      setCurrent(nextValue)
 
-      if (progress < 1) requestAnimationFrame(frame)
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(frame)
+        return
+      }
+
+      currentRef.current = target
+      frameRef.current = null
     }
 
-    requestAnimationFrame(frame)
+    frameRef.current = requestAnimationFrame(frame)
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current)
+        frameRef.current = null
+      }
+    }
   }, [target, duration])
 
   return current
@@ -123,7 +152,7 @@ export function StatCard({
 }: StatCardProps) {
   const numericTarget = parseFloat(value.replace(/[^0-9.-]/g, ''))
   const isNumeric = !isNaN(numericTarget)
-  const animated = useCountUp(isNumeric ? numericTarget : 0)
+  const animated = useCountTransition(isNumeric ? numericTarget : 0)
   const displayValue = isNumeric
     ? (value.startsWith('+') ? '+' : '') + animated.toFixed(1)
     : value
