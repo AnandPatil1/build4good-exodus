@@ -1,52 +1,59 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { getMissionPhase, type LaunchState } from '@/components/launch/launchAnimation'
 
-export function TelemetryDial() {
-  const [viability, setViability] = useState(98.4)
+export function TelemetryDial({
+  launchState,
+  progress,
+}: {
+  launchState: LaunchState
+  progress: number
+}) {
+  const progressPercent = launchState === 'arrived' ? 100 : Math.round(progress * 1000) / 10
+  const ringValue = launchState === 'idle' ? 0 : progressPercent
+  const phase = getMissionPhase(launchState, progress)
+  const statusText =
+    launchState === 'idle'
+      ? 'Awaiting Launch Command'
+      : launchState === 'arming'
+        ? 'Burn Sequence Engaged'
+        : launchState === 'arrived'
+          ? 'Destination Vector Locked'
+          : 'Interstellar Transfer Active'
 
-  // Subtle fluctuation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setViability(v => {
-        const delta = (Math.random() - 0.5) * 0.4
-        return Math.min(100, Math.max(90, v + delta))
-      })
-    }, 800)
-    return () => clearInterval(interval)
-  }, [])
-
-  const circumference = 2 * Math.PI * 140
-  const dashOffset = circumference * (1 - viability / 100)
+  const dialRadius = 92
+  const circumference = 2 * Math.PI * dialRadius
+  const dashOffset = circumference * (1 - ringValue / 100)
+  const needleAngle = (ringValue / 100) * Math.PI * 2 - Math.PI / 2
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#111111]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-stone-800 flex justify-between items-center shrink-0 bg-[#171717]">
-        <span className="text-rose-300 text-xs font-black uppercase tracking-wider">Telemetry Dashboard</span>
+      <div className="px-4 py-3 border-b border-stone-800 flex flex-col gap-2 shrink-0 bg-[#171717]">
+        <span className="text-rose-300 text-[11px] font-black uppercase tracking-wider">Telemetry</span>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-emerald-500 text-[10px] font-mono uppercase">Live Connection Stable</span>
+          <div className={`w-2 h-2 rounded-full ${launchState === 'idle' ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`} />
+          <span className="text-emerald-500 text-[9px] font-mono uppercase leading-tight">{statusText}</span>
         </div>
       </div>
 
       {/* Dial */}
-      <div className="flex-1 flex items-center justify-center bg-stone-950">
+      <div className="flex-1 flex items-center justify-center bg-stone-950 px-4 py-6">
         <div className="relative flex items-center justify-center">
-          <svg width="320" height="320" className="-rotate-90">
+          <svg width="220" height="220" className="-rotate-90">
             {/* Background track */}
             <circle
-              cx="160" cy="160" r="140"
+              cx="110" cy="110" r="92"
               fill="none"
               stroke="#27272a"
-              strokeWidth="16"
+              strokeWidth="12"
             />
             {/* Progress arc */}
             <circle
-              cx="160" cy="160" r="140"
+              cx="110" cy="110" r="92"
               fill="none"
               stroke="#10b981"
-              strokeWidth="16"
+              strokeWidth="12"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={dashOffset}
@@ -55,9 +62,9 @@ export function TelemetryDial() {
             />
             {/* Needle */}
             <line
-              x1="160" y1="160"
-              x2={160 + 120 * Math.cos((viability / 100) * Math.PI * 2 - Math.PI / 2)}
-              y2={160 + 120 * Math.sin((viability / 100) * Math.PI * 2 - Math.PI / 2)}
+              x1="110" y1="110"
+              x2={110 + 76 * Math.cos(needleAngle)}
+              y2={110 + 76 * Math.sin(needleAngle)}
               stroke="#10b981"
               strokeWidth="1.5"
               strokeLinecap="round"
@@ -68,17 +75,17 @@ export function TelemetryDial() {
           {/* Center content */}
           <div className="absolute flex flex-col items-center gap-2">
             <span className="text-stone-400 text-[10px] font-bold uppercase tracking-widest">
-              Launch Window Viability
+              Transfer
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-emerald-400 text-6xl font-black tabular-nums">
-                {viability.toFixed(1)}
+              <span className="text-emerald-400 text-4xl font-black tabular-nums">
+                {ringValue.toFixed(1)}
               </span>
-              <span className="text-emerald-400 text-2xl font-light">%</span>
+              <span className="text-emerald-400 text-xl font-light">%</span>
             </div>
-            <div className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/30">
-              <span className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em]">
-                GO FOR LAUNCH
+            <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30">
+              <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] text-center">
+                {phase}
               </span>
             </div>
           </div>
@@ -86,16 +93,16 @@ export function TelemetryDial() {
       </div>
 
       {/* Bottom status bar */}
-      <div className="px-6 py-3 border-t border-stone-800 bg-[#171717] shrink-0">
+      <div className="px-4 py-3 border-t border-stone-800 bg-[#171717] shrink-0">
         <div className="flex gap-1 mb-2">
-          <div className="flex-1 h-1 bg-emerald-500" />
-          <div className="flex-1 h-1 bg-emerald-500" />
-          <div className="flex-1 h-1 bg-emerald-500/30" />
+          <div className={`flex-1 h-1 ${launchState === 'idle' ? 'bg-stone-800' : 'bg-emerald-500'}`} />
+          <div className={`flex-1 h-1 ${launchState === 'inFlight' || launchState === 'arrived' ? 'bg-emerald-500' : 'bg-emerald-500/30'}`} />
+          <div className={`flex-1 h-1 ${launchState === 'arrived' ? 'bg-emerald-500' : 'bg-emerald-500/20'}`} />
         </div>
-        <div className="flex justify-between">
-          <span className="text-stone-500 text-[9px] font-mono uppercase">Gravity Assist: READY</span>
-          <span className="text-stone-500 text-[9px] font-mono uppercase">Propulsion: NOMINAL</span>
-          <span className="text-stone-500 text-[9px] font-mono uppercase">Stellar Winds: FAIR</span>
+        <div className="flex flex-col gap-1">
+          <span className="text-stone-500 text-[9px] font-mono uppercase">Guidance: {launchState === 'idle' ? 'STANDBY' : 'LOCKED'}</span>
+          <span className="text-stone-500 text-[9px] font-mono uppercase">Propulsion: {launchState === 'arrived' ? 'IDLE' : launchState === 'idle' ? 'READY' : 'NOMINAL'}</span>
+          <span className="text-stone-500 text-[9px] font-mono uppercase">Progress: {Math.round(ringValue)}%</span>
         </div>
       </div>
     </div>
