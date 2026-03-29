@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import ActOne from '@/components/acts/ActOne'
 import ActTwo from '@/components/acts/ActTwo'
+import ActThree from '@/components/acts/ActThree'
 
 type Act = 'earth' | 'exoplanet' | 'launch'
 
@@ -15,10 +16,10 @@ export default function Home() {
         <ActOne onInitiateExodus={() => setAct('exoplanet')} />
       )}
       {act === 'exoplanet' && (
-        <ActTwo
-          onNavigate={setAct}
-          onSelectDestination={() => setAct('launch')}
-        />
+        <ActTwo onNavigate={setAct} onSelectDestination={() => setAct('launch')} />
+      )}
+      {act === 'launch' && (
+        <ActThree onNavigate={setAct} />
       )}
     </main>
   )
