@@ -7,7 +7,6 @@ import * as THREE from 'three'
 import earthCloudMap from './2k_earth_clouds.jpg'
 import earthDayMap from './2k_earth_daymap.jpg'
 import earthNightMap from './2k_earth_nightmap.jpg'
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
 type EarthTextureSet = {
   cloudTexture: THREE.Texture | null
@@ -23,8 +22,6 @@ const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 5.7)
 const EARTH_RADIUS = 1.38
 const EARTH_SPIN_SPEED = 0.08
 const CLOUD_SPIN_OFFSET = 0.012
-const CAMERA_RETURN_DELAY_MS = 2400
-const CAMERA_RETURN_STRENGTH = 1.9
 
 const surfaceVertexShader = `
   varying vec2 vUv;
@@ -105,6 +102,41 @@ const atmosphereFragmentShader = `
 
     vec3 color = uAtmosphereColor * (0.8 + sunlight * 1.05);
     gl_FragColor = vec4(color, fresnel);
+  }
+`
+
+const cloudVertexShader = `
+  varying vec2 vUv;
+  varying vec3 vWorldNormal;
+
+  void main() {
+    vUv = uv;
+    vWorldNormal = normalize(mat3(modelMatrix) * normal);
+
+    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * viewMatrix * worldPosition;
+  }
+`
+
+const cloudFragmentShader = `
+  uniform sampler2D uCloudTexture;
+  uniform vec3 uLightDirection;
+
+  varying vec2 vUv;
+  varying vec3 vWorldNormal;
+
+  void main() {
+    float cloudMask = texture2D(uCloudTexture, vUv).r;
+    vec3 normal = normalize(vWorldNormal);
+    float lightAmount = dot(normal, normalize(uLightDirection));
+    float dayMask = smoothstep(0.02, 0.24, lightAmount);
+    float alpha = cloudMask * dayMask * 0.7;
+
+    if (alpha < 0.01) {
+      discard;
+    }
+
+    gl_FragColor = vec4(vec3(1.0), alpha);
   }
 `
 
@@ -241,17 +273,16 @@ function CloudLayer({ cloudTexture }: { cloudTexture: THREE.Texture | null }) {
   return (
     <mesh>
       <sphereGeometry args={[EARTH_RADIUS + 0.025, 128, 128]} />
-      <meshStandardMaterial
-        color="#eefbff"
-        alphaMap={cloudTexture}
+      <shaderMaterial
+        uniforms={{
+          uCloudTexture: { value: cloudTexture },
+          uLightDirection: { value: LIGHT_DIRECTION },
+        }}
+        vertexShader={cloudVertexShader}
+        fragmentShader={cloudFragmentShader}
         transparent
-        opacity={0.38}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
-        roughness={1}
-        metalness={0}
-        emissive="#8fdfff"
-        emissiveIntensity={0.1}
       />
     </mesh>
   )
@@ -305,55 +336,8 @@ function EarthRig({ cloudTexture, dayTexture, nightTexture }: EarthTextureSet) {
 }
 
 function EarthControls() {
-  const controlsRef = useRef<OrbitControlsImpl | null>(null)
-  const { camera } = useThree()
-  const isDraggingRef = useRef(false)
-  const lastInteractionAtRef = useRef<number>(Number.NEGATIVE_INFINITY)
-
-  useEffect(() => {
-    const controls = controlsRef.current
-    if (!controls) {
-      return
-    }
-
-    const handleStart = () => {
-      isDraggingRef.current = true
-    }
-
-    const handleEnd = () => {
-      isDraggingRef.current = false
-      lastInteractionAtRef.current = performance.now()
-    }
-
-    controls.addEventListener('start', handleStart)
-    controls.addEventListener('end', handleEnd)
-
-    return () => {
-      controls.removeEventListener('start', handleStart)
-      controls.removeEventListener('end', handleEnd)
-    }
-  }, [])
-
-  useFrame((_, delta) => {
-    const controls = controlsRef.current
-    if (!controls) {
-      return
-    }
-
-    if (
-      !isDraggingRef.current &&
-      performance.now() - lastInteractionAtRef.current > CAMERA_RETURN_DELAY_MS
-    ) {
-      const easing = 1 - Math.exp(-delta * CAMERA_RETURN_STRENGTH)
-      camera.position.lerp(DEFAULT_CAMERA_POSITION, easing)
-    }
-
-    controls.update()
-  })
-
   return (
     <OrbitControls
-      ref={controlsRef}
       enablePan={false}
       enableZoom={false}
       enableDamping
