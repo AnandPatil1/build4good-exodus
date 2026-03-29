@@ -1,22 +1,53 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { Sphere, Html } from '@react-three/drei'
+import { useEffect, useRef, useState } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+import { Sphere, Html, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
+
+const FALLBACK_TEXTURE_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9sN6by8AAAAASUVORK5CYII='
 
 interface PlanetMeshProps {
   position: [number, number, number]
   radius: number
   color: string
+  textureUrl?: string | null
   isSelected: boolean
   label?: string
   onClick: () => void
 }
 
-export function PlanetMesh({ position, radius, color, isSelected, label, onClick }: PlanetMeshProps) {
+export function PlanetMesh({
+  position,
+  radius,
+  color,
+  textureUrl = null,
+  isSelected,
+  label,
+  onClick,
+}: PlanetMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
+  const { gl } = useThree()
+  const texture = useTexture(textureUrl ?? FALLBACK_TEXTURE_URL)
+  const hasTexture = textureUrl !== null
+
+  useEffect(() => {
+    if (!hasTexture) {
+      return
+    }
+
+    texture.anisotropy = gl.capabilities.getMaxAnisotropy()
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.wrapS = THREE.RepeatWrapping
+    texture.wrapT = THREE.RepeatWrapping
+    texture.repeat.set(1, 1)
+    texture.minFilter = THREE.LinearMipmapLinearFilter
+    texture.magFilter = THREE.LinearFilter
+    texture.generateMipmaps = true
+    texture.needsUpdate = true
+  }, [gl, hasTexture, texture])
 
   useFrame((_, delta) => {
     if (meshRef.current) {
@@ -28,18 +59,31 @@ export function PlanetMesh({ position, radius, color, isSelected, label, onClick
     <group position={position}>
       <Sphere
         ref={meshRef}
-        args={[radius, 32, 32]}
+        args={[radius, 64, 64]}
         onClick={onClick}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <meshStandardMaterial
-          color={color}
-          roughness={0.8}
-          metalness={0.1}
-          emissive={color}
-          emissiveIntensity={isSelected ? 0.15 : hovered ? 0.1 : 0.05}
-        />
+        {hasTexture ? (
+          <meshPhysicalMaterial
+            map={texture}
+            color="#ffffff"
+            roughness={0.94}
+            metalness={0.02}
+            clearcoat={0.04}
+            clearcoatRoughness={0.9}
+            emissive="#0d0d0d"
+            emissiveIntensity={isSelected ? 0.14 : hovered ? 0.08 : 0.03}
+          />
+        ) : (
+          <meshStandardMaterial
+            color={color}
+            roughness={0.8}
+            metalness={0.1}
+            emissive={color}
+            emissiveIntensity={isSelected ? 0.15 : hovered ? 0.1 : 0.05}
+          />
+        )}
       </Sphere>
 
       {/* Selection ring */}

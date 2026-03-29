@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { getPlanetTextureSource } from '@/components/exoplanets/planetTextures'
 import { MissionNav } from '@/components/layout/MissionNav'
 import { SideNav } from '@/components/layout/SideNav'
 import { FilterPanel } from '@/components/exoplanets/FilterPanel'
@@ -11,15 +12,20 @@ import { useAppStore } from '@/store/useAppStore'
 import type { Planet } from '@/store/useAppStore'
 
 type Act = 'earth' | 'exoplanet' | 'launch'
+const VISIBLE_PLANET_LIMIT = 10
 
-// Map planet position from RA/Dec to 3D coords
+// Convert RA/Dec into a wider 3D distribution so the visible set stays readable.
 function planetPosition(planet: Planet, index: number): [number, number, number] {
-  const angle = (planet.ra / 360) * Math.PI * 2
-  const spread = 8 + (index % 5) * 3
+  const angle = (index / VISIBLE_PLANET_LIMIT) * Math.PI * 2 + (planet.ra / 360) * 0.35
+  const ring = Math.floor(index / 5)
+  const radius = ring === 0 ? 15 : 24
+  const verticalBand = ring === 0 ? 4.5 : -4.5
+  const verticalOffset = (planet.dec / 90) * 1.8
+
   return [
-    Math.cos(angle) * spread,
-    (planet.dec / 90) * 8,
-    Math.sin(angle) * spread,
+    Math.cos(angle) * radius,
+    verticalBand + verticalOffset,
+    Math.sin(angle) * radius,
   ]
 }
 
@@ -49,7 +55,7 @@ export default function ActTwo({ onNavigate, onSelectDestination }: {
     p.cvi >= filters.cvi &&
     p.radius <= filters.radius &&
     p.distanceLy <= filters.distanceLy
-  )
+  ).slice(0, VISIBLE_PLANET_LIMIT)
 
   return (
     <div className="w-full h-screen bg-[#0e0e0e] flex flex-col overflow-hidden">
@@ -65,6 +71,7 @@ export default function ActTwo({ onNavigate, onSelectDestination }: {
                 position={planetPosition(planet, i)}
                 radius={Math.max(0.4, planet.radius * 0.8)}
                 color={tempToColor(planet.temp)}
+                textureUrl={getPlanetTextureSource(planet.id, i)}
                 isSelected={selectedPlanet?.id === planet.id}
                 label={planet.name}
                 onClick={() => setSelectedPlanet(planet)}

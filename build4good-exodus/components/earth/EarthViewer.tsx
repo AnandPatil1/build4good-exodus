@@ -2,7 +2,9 @@
 
 import { OrbitControls, Stars } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import type { RefObject } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import RocketCinematic from '@/components/RocketCinematic'
 import * as THREE from 'three'
 import earthCloudMap from './2k_earth_clouds.jpg'
 import earthDayMap from './2k_earth_daymap.jpg'
@@ -19,7 +21,7 @@ type SurfaceTextureSet = Pick<EarthTextureSet, 'dayTexture' | 'nightTexture'>
 
 const LIGHT_DIRECTION = new THREE.Vector3(1, 0.35, 0.8).normalize()
 const ATMOSPHERE_COLOR = new THREE.Color('#4db2ff')
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 5.7)
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 6.2)
 const EARTH_RADIUS = 1.38
 const EARTH_SPIN_SPEED = 0.08
 const CLOUD_SPIN_OFFSET = 0.012
@@ -350,7 +352,7 @@ function EarthControls() {
   )
 }
 
-function EarthScene() {
+function EarthScene({ earthCanvasRef }: { earthCanvasRef: RefObject<HTMLDivElement | null> }) {
   const textures = useEarthTextures()
 
   return (
@@ -361,14 +363,17 @@ function EarthScene() {
       <directionalLight position={[5, 1.5, 4]} intensity={2.45} color="#fff4df" />
       <directionalLight position={[-4, -2, -3]} intensity={0.28} color="#5e84b0" />
       <EarthRig {...textures} />
+      <RocketCinematic earthCanvasRef={earthCanvasRef} />
       <EarthControls />
     </>
   )
 }
 
 export function EarthViewer() {
+  const earthCanvasRef = useRef<HTMLDivElement>(null)
+
   return (
-    <div className="flex-1 h-full bg-[#0c0a09] relative flex items-center justify-center overflow-hidden">
+    <div ref={earthCanvasRef} className="flex-1 h-full bg-[#0c0a09] relative flex items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 pointer-events-none bg-cover bg-center opacity-32"
         style={{ backgroundImage: `url(${starBackdrop.src})` }}
@@ -395,46 +400,45 @@ export function EarthViewer() {
       <div className="absolute w-full h-[0.5px] bg-rose-300/30 top-1/2 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
       <div className="absolute h-full w-[0.5px] bg-rose-300/30 left-1/2 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
 
-      <div className="absolute w-[580px] h-[580px] rounded-full border-[0.5px] border-rose-300/30 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
-      <div className="absolute w-[500px] h-[500px] rounded-full border-[0.5px] border-rose-300/30 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
+      <div className="absolute left-1/2 top-1/2 w-[700px] h-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[0.5px] border-rose-300/18 pointer-events-none shadow-[0_0_14px_rgba(251,113,133,0.14)]" />
+      <div className="absolute left-1/2 top-1/2 w-[560px] h-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[0.5px] border-rose-300/24 pointer-events-none shadow-[0_0_14px_rgba(251,113,133,0.14)]" />
 
-      <div className="relative z-10 w-[380px] h-[380px]">
-        <div className="absolute inset-0 rounded-full overflow-hidden shadow-[0_0_120px_rgba(251,113,133,0.28)]">
-          <Canvas
-            camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 28 }}
-            dpr={[1, 1.75]}
-            gl={{ antialias: true, alpha: true }}
-          >
-            <EarthScene />
-          </Canvas>
-          <div
-            className="absolute inset-0 opacity-60 pointer-events-none"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at center, rgba(15,23,42,0) 0%, rgba(7,10,17,0.18) 45%, rgba(2,6,23,0.7) 100%)',
-            }}
-          />
-        </div>
-
-        <div className="absolute inset-0 rounded-full border-[0.5px] border-rose-300/30 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
-
-        <div
-          className="absolute inset-0 rounded-full scale-110 animate-ping pointer-events-none shadow-[0_0_54px_rgba(244,63,94,0.62),inset_0_0_34px_rgba(251,113,133,0.42)]"
-          style={{ animationDuration: '2.5s' }}
-        />
-        <div
-          className="absolute inset-0 rounded-full border-2 border-rose-500/80 scale-110 animate-ping pointer-events-none"
-          style={{ animationDuration: '2.5s' }}
-        />
-        <div
-          className="absolute inset-0 rounded-full scale-125 animate-ping pointer-events-none shadow-[0_0_44px_rgba(251,113,133,0.42),inset_0_0_26px_rgba(251,113,133,0.24)]"
-          style={{ animationDuration: '2.5s', animationDelay: '0.4s' }}
-        />
-        <div
-          className="absolute inset-0 rounded-full border border-rose-400/55 scale-125 animate-ping pointer-events-none"
-          style={{ animationDuration: '2.5s', animationDelay: '0.4s' }}
-        />
+      <div className="absolute inset-0 z-10">
+        <Canvas
+          camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 26 }}
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, alpha: true }}
+        >
+          <EarthScene earthCanvasRef={earthCanvasRef} />
+        </Canvas>
       </div>
+
+      <div className="absolute left-1/2 top-1/2 z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none shadow-[0_0_140px_rgba(251,113,133,0.18)]" />
+      <div
+        className="absolute inset-0 z-10 opacity-60 pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at center, rgba(15,23,42,0) 0%, rgba(7,10,17,0.14) 36%, rgba(2,6,23,0.62) 100%)',
+        }}
+      />
+      <div className="absolute left-1/2 top-1/2 z-20 h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[0.5px] border-rose-300/28 pointer-events-none shadow-[0_0_14px_rgba(251,113,133,0.18)]" />
+
+      <div
+        className="absolute left-1/2 top-1/2 z-20 h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full scale-110 animate-ping pointer-events-none shadow-[0_0_52px_rgba(244,63,94,0.42),inset_0_0_28px_rgba(251,113,133,0.24)]"
+        style={{ animationDuration: '2.5s' }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 z-20 h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-rose-500/65 scale-110 animate-ping pointer-events-none"
+        style={{ animationDuration: '2.5s' }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 z-20 h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full scale-[1.2] animate-ping pointer-events-none shadow-[0_0_40px_rgba(251,113,133,0.28),inset_0_0_20px_rgba(251,113,133,0.14)]"
+        style={{ animationDuration: '2.5s', animationDelay: '0.4s' }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 z-20 h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-rose-400/42 scale-[1.2] animate-ping pointer-events-none"
+        style={{ animationDuration: '2.5s', animationDelay: '0.4s' }}
+      />
 
       <div className="absolute top-3 right-4 text-right text-[10px] text-stone-500 font-mono leading-5 pointer-events-none">
         <div>SECTOR: SOL-03</div>

@@ -1,7 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { StatCard } from '@/components/ui/StatCard'
 import { EarthViewer } from '@/components/earth/EarthViewer'
 import { MissionNav } from '@/components/layout/MissionNav'
 import { SideNav } from '@/components/layout/SideNav'

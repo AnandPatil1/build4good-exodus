@@ -1,12 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useLaunch } from '@/components/RocketCinematic'
 
 // Starting at 2 hours for drama
 const START_SECONDS = 2 * 60 * 60
 
-export function BottomBar({ onInitiate }: { onInitiate: () => void }) {
+export function BottomBar({
+  onInitiate,
+}: {
+  onInitiate: () => void
+}) {
   const [totalMs, setTotalMs] = useState(START_SECONDS * 1000)
+  const { isLaunching, triggerLaunch } = useLaunch()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,6 +41,13 @@ export function BottomBar({ onInitiate }: { onInitiate: () => void }) {
       </div>
 
       <div className="flex gap-2">
+        <button
+          onClick={triggerLaunch}
+          disabled={isLaunching}
+          className="px-5 py-2 border border-cyan-400/45 text-cyan-100 text-xs font-bold uppercase tracking-widest hover:bg-cyan-400/8 transition-colors disabled:border-stone-800 disabled:text-stone-600 disabled:hover:bg-transparent"
+        >
+          {isLaunching ? 'LAUNCHING...' : 'LAUNCH'}
+        </button>
         <button
           onClick={onInitiate}
           className="px-5 py-2 border border-stone-600 text-stone-200 text-xs font-bold uppercase tracking-widest hover:bg-stone-800 transition-colors"
