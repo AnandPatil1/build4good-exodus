@@ -34,6 +34,11 @@ body {
   transition: color 120ms ease;
 }
 
+@keyframes border-glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 .term-glitch-trigger:hover .term-glitch,
 .term-glitch-trigger:focus-visible .term-glitch {
   animation: term-glitch-flicker 220ms steps(2, end) infinite;
