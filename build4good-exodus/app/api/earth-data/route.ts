@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import {
   getEarthDataRegressionCoefficients,
-  getEarthDataRegressionIndexInfo,
+  getEarthDataSharedNextIndex,
 } from '@/lib/get-earth-data-regression'
 import { getEarthData } from '@/lib/nasaPower'
 
@@ -18,11 +18,11 @@ export async function GET() {
     const earthData = await getEarthData(latitude, longitude)
     const regressionCoefficients =
       getEarthDataRegressionCoefficients(earthData)
-    const regressionIndexInfo = getEarthDataRegressionIndexInfo(earthData)
+    const nextIndex = getEarthDataSharedNextIndex(earthData)
 
     return NextResponse.json({
       regressionCoefficients: regressionCoefficients.coefficients,
-      regressionIndexInfo,
+      nextIndex,
     })
   } catch (error) {
     const message =
