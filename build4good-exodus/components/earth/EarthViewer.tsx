@@ -1,12 +1,13 @@
 'use client'
 
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Stars } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import earthCloudMap from './2k_earth_clouds.jpg'
 import earthDayMap from './2k_earth_daymap.jpg'
 import earthNightMap from './2k_earth_nightmap.jpg'
+import starBackdrop from './2k_stars.jpg'
 
 type EarthTextureSet = {
   cloudTexture: THREE.Texture | null
@@ -354,6 +355,7 @@ function EarthScene() {
 
   return (
     <>
+      <Stars radius={110} depth={55} count={5000} factor={3} fade speed={0.5} />
       <ambientLight intensity={0.26} color="#9fc2e8" />
       <hemisphereLight args={['#d7ecff', '#1c1310', 0.85]} />
       <directionalLight position={[5, 1.5, 4]} intensity={2.45} color="#fff4df" />
@@ -367,6 +369,18 @@ function EarthScene() {
 export function EarthViewer() {
   return (
     <div className="flex-1 h-full bg-[#0c0a09] relative flex items-center justify-center overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none bg-cover bg-center opacity-32"
+        style={{ backgroundImage: `url(${starBackdrop.src})` }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at center, rgba(12,10,9,0.08) 0%, rgba(12,10,9,0.2) 42%, rgba(12,10,9,0.78) 100%)',
+        }}
+      />
+
       <div className="absolute top-4 left-4 pointer-events-none z-20">
         <div className="border border-cyan-300/40 bg-[#07131b]/80 px-4 py-2 shadow-[0_0_24px_rgba(103,232,249,0.18)] backdrop-blur-sm">
           <div className="font-mono text-[9px] uppercase tracking-[0.45em] text-cyan-300/70">
@@ -378,14 +392,14 @@ export function EarthViewer() {
         </div>
       </div>
 
-      <div className="absolute w-full h-px bg-rose-300/10 top-1/2 pointer-events-none" />
-      <div className="absolute h-full w-px bg-rose-300/10 left-1/2 pointer-events-none" />
+      <div className="absolute w-full h-[0.5px] bg-rose-300/30 top-1/2 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
+      <div className="absolute h-full w-[0.5px] bg-rose-300/30 left-1/2 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
 
-      <div className="absolute w-[580px] h-[580px] rounded-full border border-rose-300/15 pointer-events-none" />
-      <div className="absolute w-[500px] h-[500px] rounded-full border border-rose-300/10 pointer-events-none" />
+      <div className="absolute w-[580px] h-[580px] rounded-full border-[0.5px] border-rose-300/30 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
+      <div className="absolute w-[500px] h-[500px] rounded-full border-[0.5px] border-rose-300/30 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
 
       <div className="relative z-10 w-[380px] h-[380px]">
-        <div className="absolute inset-0 rounded-full overflow-hidden shadow-[0_0_100px_rgba(239,68,68,0.18)]">
+        <div className="absolute inset-0 rounded-full overflow-hidden shadow-[0_0_120px_rgba(251,113,133,0.28)]">
           <Canvas
             camera={{ position: DEFAULT_CAMERA_POSITION.toArray() as [number, number, number], fov: 28 }}
             dpr={[1, 1.75]}
@@ -393,16 +407,31 @@ export function EarthViewer() {
           >
             <EarthScene />
           </Canvas>
+          <div
+            className="absolute inset-0 opacity-60 pointer-events-none"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle at center, rgba(15,23,42,0) 0%, rgba(7,10,17,0.18) 45%, rgba(2,6,23,0.7) 100%)',
+            }}
+          />
         </div>
 
-        <div className="absolute inset-0 rounded-full border border-rose-300/10 pointer-events-none" />
+        <div className="absolute inset-0 rounded-full border-[0.5px] border-rose-300/30 pointer-events-none shadow-[0_0_10px_rgba(251,113,133,0.2)]" />
 
         <div
-          className="absolute inset-0 rounded-full border-2 border-rose-500/30 scale-110 animate-ping pointer-events-none"
+          className="absolute inset-0 rounded-full scale-110 animate-ping pointer-events-none shadow-[0_0_54px_rgba(244,63,94,0.62),inset_0_0_34px_rgba(251,113,133,0.42)]"
           style={{ animationDuration: '2.5s' }}
         />
         <div
-          className="absolute inset-0 rounded-full border border-rose-500/15 scale-125 animate-ping pointer-events-none"
+          className="absolute inset-0 rounded-full border-2 border-rose-500/80 scale-110 animate-ping pointer-events-none"
+          style={{ animationDuration: '2.5s' }}
+        />
+        <div
+          className="absolute inset-0 rounded-full scale-125 animate-ping pointer-events-none shadow-[0_0_44px_rgba(251,113,133,0.42),inset_0_0_26px_rgba(251,113,133,0.24)]"
+          style={{ animationDuration: '2.5s', animationDelay: '0.4s' }}
+        />
+        <div
+          className="absolute inset-0 rounded-full border border-rose-400/55 scale-125 animate-ping pointer-events-none"
           style={{ animationDuration: '2.5s', animationDelay: '0.4s' }}
         />
       </div>

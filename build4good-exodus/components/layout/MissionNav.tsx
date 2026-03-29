@@ -13,7 +13,9 @@ export function MissionNav({ activeAct, onNavigate }: {
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[60px] px-6 bg-[#171717]/90 backdrop-blur-md border-b border-rose-500/20 flex justify-between items-center">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-[60px] px-6 bg-[#171717]/90 backdrop-blur-md border-b border-rose-500/20 flex justify-between items-center overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/75 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-[20px] bg-gradient-to-b from-rose-500/20 via-rose-500/8 to-transparent blur-md pointer-events-none" />
       <span className="text-rose-500 text-lg font-black uppercase tracking-widest">
         OPERATION EXODUS
       </span>

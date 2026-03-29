@@ -22,7 +22,9 @@ export function BottomBar({ onInitiate }: { onInitiate: () => void }) {
   const fmt = (n: number) => String(n).padStart(2, '0')
 
   return (
-    <div className="h-[60px] px-6 bg-[#171717] border-t border-stone-800 flex items-center justify-between shrink-0">
+    <div className="h-[60px] px-6 bg-[#171717] border-t border-stone-800 flex items-center justify-between shrink-0 relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/75 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-[20px] bg-gradient-to-t from-rose-500/20 via-rose-500/8 to-transparent blur-md pointer-events-none" />
       <div className="text-[10px] text-rose-300/50 font-mono leading-5">
         <div>TO CRITICAL THRESHOLD</div>
         <div>EXTINCTION EVENT HORIZON CALCULATION: ACTIVE</div>
