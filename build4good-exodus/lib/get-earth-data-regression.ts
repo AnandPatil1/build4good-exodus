@@ -77,26 +77,58 @@ function isValidNasaEntry(
   return isValidNasaValue(entry[1])
 }
 
-function getValidRegressionPoints(
-  series: NasaParameterSeries | undefined
-): RegressionPoint[] {
+function getValidSortedEntries(series: NasaParameterSeries | undefined) {
   if (!series) {
-    return []
+    return [] as [string, number][]
   }
 
   return Object.entries(series)
     .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
     .filter(isValidNasaEntry)
-    .map(([dateKey, value], index) => ({
+}
+
+function getSharedValidDateKeys(
+  parameterData: Partial<Record<EarthDataParameter, NasaParameterSeries>>
+) {
+  const validDateKeySets = EARTH_DATA_PARAMETERS.map(
+    (parameter) => new Set(getValidSortedEntries(parameterData[parameter]).map(([dateKey]) => dateKey))
+  )
+
+  const [firstDateKeySet, ...remainingDateKeySets] = validDateKeySets
+
+  return Array.from(firstDateKeySet)
+    .filter((dateKey) =>
+      remainingDateKeySets.every((dateKeySet) => dateKeySet.has(dateKey))
+    )
+    .sort((leftKey, rightKey) => leftKey.localeCompare(rightKey))
+}
+
+function getSharedRegressionPoints(
+  series: NasaParameterSeries | undefined,
+  sharedDateKeys: string[]
+): RegressionPoint[] {
+  if (!series || sharedDateKeys.length === 0) {
+    return []
+  }
+
+  const validEntriesByDateKey = new Map(getValidSortedEntries(series))
+
+  return sharedDateKeys.flatMap((dateKey, index) => {
+    const value = validEntriesByDateKey.get(dateKey)
+
+    if (value === undefined) {
+      return []
+    }
+
+    return {
       dateKey,
       x: index,
       y: value,
-    }))
+    }
+  })
 }
 
-function getLinearRegressionCoefficients(series: NasaParameterSeries | undefined) {
-  const points = getValidRegressionPoints(series)
-
+function getLinearRegressionCoefficients(points: RegressionPoint[]) {
   if (points.length < 2) {
     return {
       slope: null,
@@ -128,39 +160,39 @@ function getLinearRegressionCoefficients(series: NasaParameterSeries | undefined
   }
 }
 
-export function getRegressionIndexInfo(
-  series: NasaParameterSeries | undefined
-): RegressionIndexInfo {
-  const points = getValidRegressionPoints(series)
-
-  if (points.length === 0) {
+function getRegressionIndexInfo(points: RegressionPoint[]): RegressionIndexInfo {
+  if (points.length < 2) {
     return {
-      pointCount: 0,
-      lastX: null,
-      nextX: null,
-      lastDateKey: null,
-      note: 'No valid monthly points available for regression.',
+      pointCount: points.length,
+      lastX: points.length === 0 ? null : points.length - 1,
+      nextX: points.length === 0 ? null : points.length,
+      lastDateKey: points.length === 0 ? null : points[points.length - 1].dateKey,
+      note:
+        points.length === 0
+          ? 'No shared valid monthly points available for regression.'
+          : 'Fewer than 2 shared valid monthly points available for regression.',
     }
   }
 
-  const lastPoint = points[points.length - 1]
-
   return {
     pointCount: points.length,
-    lastX: lastPoint.x,
+    lastX: points.length - 1,
     nextX: points.length,
-    lastDateKey: lastPoint.dateKey,
+    lastDateKey: points[points.length - 1].dateKey,
   }
 }
 
 export function getEarthDataRegressionCoefficients(earthData: EarthDataResult) {
   const rawData = earthData.data as NasaPowerPayload
   const parameterData = rawData.properties?.parameter ?? {}
+  const sharedDateKeys = getSharedValidDateKeys(parameterData)
 
   const coefficients = Object.fromEntries(
     EARTH_DATA_PARAMETERS.map((parameter) => [
       parameter,
-      getLinearRegressionCoefficients(parameterData[parameter]),
+      getLinearRegressionCoefficients(
+        getSharedRegressionPoints(parameterData[parameter], sharedDateKeys)
+      ),
     ])
   ) as Record<
     EarthDataParameter,
@@ -182,14 +214,24 @@ export function getEarthDataRegressionIndexInfo(
 ): EarthDataRegressionIndexInfo {
   const rawData = earthData.data as NasaPowerPayload
   const parameterData = rawData.properties?.parameter ?? {}
+  const sharedDateKeys = getSharedValidDateKeys(parameterData)
 
   return Object.fromEntries(
     EARTH_DATA_PARAMETERS.map((parameter) => [
       parameter,
       {
         ...EARTH_DATA_PARAMETER_METADATA[parameter],
-        ...getRegressionIndexInfo(parameterData[parameter]),
+        ...getRegressionIndexInfo(
+          getSharedRegressionPoints(parameterData[parameter], sharedDateKeys)
+        ),
       },
     ])
   ) as EarthDataRegressionIndexInfo
+}
+
+export function getEarthDataSharedNextIndex(earthData: EarthDataResult) {
+  const regressionIndexInfo = getEarthDataRegressionIndexInfo(earthData)
+  const sharedPointCount = regressionIndexInfo.T2M.pointCount
+
+  return sharedPointCount >= 2 ? regressionIndexInfo.T2M.nextX : null
 }
