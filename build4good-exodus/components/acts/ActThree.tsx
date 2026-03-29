@@ -42,9 +42,7 @@ export default function ActThree({ onNavigate }: { onNavigate: (act: Act) => voi
   useEffect(() => () => stopAnimation(), [stopAnimation])
 
   const beginLaunch = useCallback(() => {
-    if (!selectedPlanet) {
-      return
-    }
+    if (!selectedPlanet) return
 
     stopAnimation()
     setLaunchState('arming')
@@ -94,6 +92,7 @@ export default function ActThree({ onNavigate }: { onNavigate: (act: Act) => voi
             progress={progress}
             onLaunch={beginLaunch}
             onReplay={resetLaunch}
+            onSelectNew={() => onNavigate('exoplanet')}
           />
         </div>
       </div>
