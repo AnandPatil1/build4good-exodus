@@ -10,10 +10,10 @@ const NASA_POWER_PARAMETERS = [
 ] as const
 
 function getDateRange() {
-  // NASA POWER expects complete historical years, so we stop at last year.
+  // NASA POWER expects complete historical years
   const currentYear = new Date().getUTCFullYear()
-  const endYear = currentYear - 1
-  const startYear = endYear - 9
+  const endYear = currentYear - 1 // start as last year
+  const startYear = endYear - 9 // go 10 years back
 
   return {
     start: `${startYear}`, // proper date formatting
