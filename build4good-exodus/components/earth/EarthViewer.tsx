@@ -352,6 +352,10 @@ function EarthControls() {
       minDistance={DEFAULT_CAMERA_POSITION.length()}
       maxDistance={DEFAULT_CAMERA_POSITION.length()}
       onChange={(event) => {
+        if (!event) {
+          return
+        }
+
         const controls = event.target
         const camera = controls.object as THREE.PerspectiveCamera
         const target = controls.target as THREE.Vector3

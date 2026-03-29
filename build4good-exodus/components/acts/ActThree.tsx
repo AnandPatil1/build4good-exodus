@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { MissionNav } from '@/components/layout/MissionNav'
 import { SideNav } from '@/components/layout/SideNav'
 import { OrbitalMap } from '@/components/launch/OrbitalMap'
-import { MissionSummary } from '@/components/launch/MissionSummary'
 import {
   ARMING_DURATION_MS,
   FLIGHT_DURATION_MS,
@@ -88,17 +87,9 @@ export default function ActThree({ onNavigate }: { onNavigate: (act: Act) => voi
       <MissionNav activeAct="launch" onNavigate={onNavigate} />
       <div className="flex flex-1 overflow-hidden pt-[60px]">
         <SideNav activeItem="critical" />
-        {/* Center — orbital map */}
-        <div className="flex-1 min-w-0 h-full border-r border-stone-800 flex flex-col">
+        <div className="flex h-full min-w-0 flex-1 flex-col">
           <OrbitalMap
             planet={selectedPlanet}
-            launchState={launchState}
-            progress={progress}
-          />
-        </div>
-        {/* Right — mission summary */}
-        <div className="w-[260px] shrink-0 h-full flex flex-col">
-          <MissionSummary
             launchState={launchState}
             progress={progress}
             onLaunch={beginLaunch}
