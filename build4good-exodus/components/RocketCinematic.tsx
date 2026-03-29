@@ -25,15 +25,16 @@ type LaunchParticle = {
   color: string
 }
 
-const MAX_TRACER_POINTS = 200
-const MAX_PARTICLES = 220
+const MAX_TRACER_POINTS = 600
+const MAX_PARTICLES = 620
 const IGNITION_DURATION = 0.5
-const LAUNCH_DURATION = 2.5
-const TOTAL_DURATION = 3
-const LAUNCH_X = 0.58
-const LAUNCH_Y = 1.58
-const LAUNCH_Z = 1.18
-const ROCKET_SCALE = 2.6
+const LAUNCH_DURATION = 5.5
+const TOTAL_DURATION = 6.5
+const EARTH_RADIUS = 1.38
+const LAUNCH_X = 0.62
+const LAUNCH_Y = EARTH_RADIUS + 0.14
+const LAUNCH_Z = 0.94
+const ROCKET_SCALE = 0.95
 
 const useLaunchStore = create<LaunchState>((set, get) => ({
   isLaunching: false,
