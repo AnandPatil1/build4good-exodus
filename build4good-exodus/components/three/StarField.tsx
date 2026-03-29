@@ -10,7 +10,17 @@ import { useAppStore } from '@/store/useAppStore'
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 30)
 const DEFAULT_LOOK_AT = new THREE.Vector3(0, 0, 0)
 
-export function StarField({ children }: { children?: React.ReactNode }) {
+export function StarField({
+  children,
+  interactive = true,
+  cameraPosition,
+  target,
+}: {
+  children?: React.ReactNode
+  interactive?: boolean
+  cameraPosition?: [number, number, number]
+  target?: [number, number, number]
+}) {
   const selectedPlanetId = useAppStore(s => s.selectedPlanet?.id ?? null)
   const controlsRef = useRef<OrbitControlsImpl | null>(null)
 
@@ -64,29 +74,61 @@ export function StarField({ children }: { children?: React.ReactNode }) {
       {/* Occasional brighter stars for sparkle */}
       <BigStarLayer count={180} radius={220} />
 
-      <CameraResetController
-        controlsRef={controlsRef}
-        selectedPlanetId={selectedPlanetId}
-      />
+      {interactive ? (
+        <>
+          <CameraResetController
+            controlsRef={controlsRef}
+            selectedPlanetId={selectedPlanetId}
+          />
 
-      <OrbitControls
-        ref={controlsRef}
-        makeDefault
-        enableZoom
-        enablePan
-        enableDamping
-        screenSpacePanning
-        zoomSpeed={0.45}
-        rotateSpeed={0.32}
-        panSpeed={0.65}
-        dampingFactor={0.07}
-        minDistance={2}
-        maxDistance={160}
-      />
+          <OrbitControls
+            ref={controlsRef}
+            makeDefault
+            enableZoom
+            enablePan
+            enableDamping
+            screenSpacePanning
+            zoomSpeed={0.45}
+            rotateSpeed={0.32}
+            panSpeed={0.65}
+            dampingFactor={0.07}
+            minDistance={2}
+            maxDistance={160}
+          />
+        </>
+      ) : (
+        <SyncedCamera cameraPosition={cameraPosition} target={target} />
+      )}
 
       {children}
     </Canvas>
   )
+}
+
+function SyncedCamera({
+  cameraPosition,
+  target,
+}: {
+  cameraPosition?: [number, number, number]
+  target?: [number, number, number]
+}) {
+  const { camera } = useThree()
+  const lookAtTarget = useRef(new THREE.Vector3())
+
+  useFrame(() => {
+    if (cameraPosition) {
+      camera.position.set(...cameraPosition)
+    }
+
+    if (target) {
+      lookAtTarget.current.set(...target)
+      camera.lookAt(lookAtTarget.current)
+    } else {
+      camera.lookAt(DEFAULT_LOOK_AT)
+    }
+  })
+
+  return null
 }
 
 function CameraLight() {

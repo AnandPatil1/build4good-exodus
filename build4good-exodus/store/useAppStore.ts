@@ -45,12 +45,17 @@ interface AppStore {
     radius: number
     distanceLy: number
   }
+  earthView: {
+    cameraPosition: [number, number, number]
+    target: [number, number, number]
+  }
   setSelectedPlanet: (planet: Planet | null) => void
   setPlanets: (planets: Planet[]) => void
   setEarthRegression: (data: EarthRegression) => void
   setEarthSeries: (series: EarthSeries) => void
   setEarthLoading: (loading: boolean) => void
   setTimeToBreach: (years: number, param: string) => void
+  setEarthView: (cameraPosition: [number, number, number], target: [number, number, number]) => void
   tickYear: () => void
   setFilter: (key: keyof AppStore['filters'], value: number) => void
 }
@@ -65,12 +70,17 @@ export const useAppStore = create<AppStore>((set) => ({
   breachingParam: null,
   elapsedYears: 0,
   filters: { cvi: 0, radius: 2, distanceLy: 5000 },
+  earthView: {
+    cameraPosition: [0, 0, 5.7],
+    target: [0, 0, 0],
+  },
   setSelectedPlanet: (planet) => set({ selectedPlanet: planet }),
   setPlanets: (planets) => set({ planets }),
   setEarthRegression: (data) => set({ earthRegression: data }),
   setEarthSeries: (series) => set({ earthSeries: series }),
   setEarthLoading: (loading) => set({ earthLoading: loading }),
   setTimeToBreach: (years, param) => set({ timeToBreachYears: years, breachingParam: param }),
+  setEarthView: (cameraPosition, target) => set({ earthView: { cameraPosition, target } }),
   tickYear: () => set(s => ({ elapsedYears: s.elapsedYears + 1 })),
   setFilter: (key, value) => set(s => ({ filters: { ...s.filters, [key]: value } })),
 }))

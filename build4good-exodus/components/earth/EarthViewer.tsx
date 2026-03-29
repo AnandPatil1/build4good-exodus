@@ -1,13 +1,13 @@
 'use client'
 
-import { OrbitControls, Stars } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { useAppStore } from '@/store/useAppStore'
 import earthCloudMap from './2k_earth_clouds.jpg'
 import earthDayMap from './2k_earth_daymap.jpg'
 import earthNightMap from './2k_earth_nightmap.jpg'
-import starBackdrop from './2k_stars.jpg'
 
 type EarthTextureSet = {
   cloudTexture: THREE.Texture | null
@@ -337,8 +337,13 @@ function EarthRig({ cloudTexture, dayTexture, nightTexture }: EarthTextureSet) {
 }
 
 function EarthControls() {
+  const setEarthView = useAppStore((state) => state.setEarthView)
+  const lastCameraRef = useRef(new THREE.Vector3())
+  const lastTargetRef = useRef(new THREE.Vector3())
+
   return (
     <OrbitControls
+      makeDefault
       enablePan={false}
       enableZoom={false}
       enableDamping
@@ -346,6 +351,25 @@ function EarthControls() {
       rotateSpeed={0.45}
       minDistance={DEFAULT_CAMERA_POSITION.length()}
       maxDistance={DEFAULT_CAMERA_POSITION.length()}
+      onChange={(event) => {
+        const controls = event.target
+        const camera = controls.object as THREE.PerspectiveCamera
+        const target = controls.target as THREE.Vector3
+
+        if (
+          lastCameraRef.current.distanceToSquared(camera.position) < 0.000001 &&
+          lastTargetRef.current.distanceToSquared(target) < 0.000001
+        ) {
+          return
+        }
+
+        lastCameraRef.current.copy(camera.position)
+        lastTargetRef.current.copy(target)
+        setEarthView(
+          [camera.position.x, camera.position.y, camera.position.z],
+          [target.x, target.y, target.z],
+        )
+      }}
     />
   )
 }
@@ -355,7 +379,6 @@ function EarthScene() {
 
   return (
     <>
-      <Stars radius={110} depth={55} count={5000} factor={3} fade speed={0.5} />
       <ambientLight intensity={0.26} color="#9fc2e8" />
       <hemisphereLight args={['#d7ecff', '#1c1310', 0.85]} />
       <directionalLight position={[5, 1.5, 4]} intensity={2.45} color="#fff4df" />
@@ -368,11 +391,7 @@ function EarthScene() {
 
 export function EarthViewer() {
   return (
-    <div className="flex-1 h-full bg-[#0c0a09] relative flex items-center justify-center overflow-hidden">
-      <div
-        className="absolute inset-0 pointer-events-none bg-cover bg-center opacity-32"
-        style={{ backgroundImage: `url(${starBackdrop.src})` }}
-      />
+    <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-[#0c0a09]/45">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
