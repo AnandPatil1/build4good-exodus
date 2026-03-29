@@ -200,6 +200,22 @@ export function PlanetDetail({ onSelectDestination }: { onSelectDestination: () 
   const planet = useAppStore((s) => s.selectedPlanet)
   const earthRegression = useAppStore((s) => s.earthRegression)
   const elapsedYears = useAppStore((s) => s.elapsedYears)
+  const planets = useAppStore((s) => s.planets)
+  const setSelectedPlanet = useAppStore((s) => s.setSelectedPlanet)
+
+  const currentIndex = planet ? planets.findIndex(p => p.id === planet.id) : -1
+
+  const handlePrevPlanet = () => {
+    if (currentIndex > 0) {
+      setSelectedPlanet(planets[currentIndex - 1])
+    }
+  }
+
+  const handleNextPlanet = () => {
+    if (currentIndex < planets.length - 1) {
+      setSelectedPlanet(planets[currentIndex + 1])
+    }
+  }
 
   // Dynamic Earth temp — projected forward using regression + elapsed years
   const earthTemp = (() => {
@@ -252,9 +268,31 @@ export function PlanetDetail({ onSelectDestination }: { onSelectDestination: () 
 
       {/* Planet name */}
       <div className="px-4 py-3 border-b border-rose-500/15 bg-stone-900/40 shrink-0 shadow-[0_1px_0_0_rgba(244,63,94,0.10),inset_1px_0_0_rgba(244,63,94,0.06)]">
-        <h2 className="text-white text-xl font-black uppercase tracking-tight leading-tight">
-          {planet.name}
-        </h2>
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <h2 className="text-white text-xl font-black uppercase tracking-tight leading-tight flex-1">
+            {planet.name}
+          </h2>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Left arrow */}
+            <button
+              onClick={handlePrevPlanet}
+              disabled={currentIndex <= 0}
+              className="flex items-center justify-center w-8 h-8 border-2 border-stone-600 hover:border-stone-300 hover:bg-stone-700/60 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+              title="Previous planet"
+            >
+              <span className="text-stone-300 text-lg font-bold leading-none">◀</span>
+            </button>
+            {/* Right arrow */}
+            <button
+              onClick={handleNextPlanet}
+              disabled={currentIndex >= planets.length - 1}
+              className="flex items-center justify-center w-8 h-8 border-2 border-stone-600 hover:border-stone-300 hover:bg-stone-700/60 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+              title="Next planet"
+            >
+              <span className="text-stone-300 text-lg font-bold leading-none">▶</span>
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <InfoTooltip term="RA" description={TERM_DESCRIPTIONS.ra}
             textClassName="text-[9px] font-mono text-rose-300/70 hover:text-orange-200 uppercase tracking-wider">

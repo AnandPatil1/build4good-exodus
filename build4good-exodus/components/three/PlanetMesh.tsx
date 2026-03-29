@@ -87,7 +87,7 @@ export function PlanetMesh({
 
     if (isZoomAnimatingRef.current && groupRef.current) {
       groupRef.current.getWorldPosition(targetLookAt.current)
-      targetCameraPosition.current.copy(targetLookAt.current).add(new THREE.Vector3(0, 0, Math.max(radius * 8, 3.5)))
+      targetCameraPosition.current.copy(targetLookAt.current).add(new THREE.Vector3(0, 0, Math.max(radius * 5, 3.5)))
       camera.position.lerp(targetCameraPosition.current, 0.05)
       camera.lookAt(targetLookAt.current)
 
