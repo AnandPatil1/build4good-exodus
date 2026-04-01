@@ -1,5 +1,7 @@
 # Operation Exodus - Build4Good 2026 Space Data Visualization Winner
 
+**[🚀 Live Demo](https://build4good-exodus.vercel.app/)**
+
 **Project Overview**:
 A sci-fi storytelling app that uses real NASA climate and exoplanet data to answer: "Can we find a new home before Earth becomes uninhabitable?" Users progress through 3 acts.
 
